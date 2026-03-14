@@ -35,10 +35,14 @@ jobs:
           Rscript -e 'install.packages(c("TraMineR", "jsonlite"), repos="https://cloud.r-project.org")'
       - name: Generate TraMineR fixtures
         run: Rscript scripts/export_traminer_goldens.R
+      - name: Upload TraMineR fixture artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: traminer-reference-fixture
+          path: tests/goldens/traminer_reference.json
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
       - name: Run parity tests
         run: pytest tests/test_parity_scaffolding.py
-

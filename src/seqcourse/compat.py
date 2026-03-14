@@ -161,4 +161,3 @@ class CompatNamespace:
 
 
 compat = CompatNamespace()
-

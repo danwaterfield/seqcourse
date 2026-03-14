@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -10,7 +10,7 @@ from .backends import get_backend
 from .costs import cost_matrix
 from .dataset import SequenceDataset
 from .results import CostMatrixResult
-from ._utils import condensed_from_square, normalize_method, rolling_breaks, second_smallest, trimmed_row
+from ._utils import condensed_from_square, normalize_method, rolling_breaks, trimmed_row
 
 
 def _ensure_dataset(seqdata: SequenceDataset | object) -> SequenceDataset:
@@ -25,6 +25,22 @@ def _resolved_with_missing(dataset: SequenceDataset, with_missing: bool) -> bool
     if dataset.has_missing and not with_missing:
         raise ValueError("Missing values are present; set 'with_missing=True' to include them explicitly.")
     return with_missing
+
+
+def _normalize_norm_argument(norm: str | bool) -> str:
+    if isinstance(norm, bool):
+        return "auto" if norm else "none"
+    return norm
+
+
+def _validate_norm_argument(method_name: str, norm: str | bool) -> str:
+    resolved = normalize_method(_normalize_norm_argument(norm))
+    allowed = {"AUTO", "NONE", "MAXLENGTH", "GMEAN", "MAXDIST", "YUJIANBO"}
+    if resolved not in allowed:
+        raise ValueError(f"Unsupported normalization {norm!r}.")
+    if method_name in {"CHI2", "EUCLID"} and resolved not in {"AUTO", "NONE"}:
+        raise ValueError(f"Normalization {norm!r} is not supported for {method_name}.")
+    return resolved
 
 
 def _resolve_costs(
@@ -224,7 +240,7 @@ def _normalized_distance(
     len2: int,
     max_distance: float,
 ) -> float:
-    norm_name = normalize_method(norm)
+    norm_name = _validate_norm_argument(method_name, norm)
     if norm_name == "AUTO":
         if method_name in {"OM", "HAM", "DHD"}:
             norm_name = "MAXLENGTH"
@@ -340,7 +356,7 @@ def _chi2_or_euclid(
             value = float(np.sqrt(np.sum(diff ** 2)))
         else:
             value = float(np.sqrt(np.sum((diff ** 2) / weights_vector)))
-        if normalize_method(norm) != "NONE":
+        if _validate_norm_argument(method_name, norm) != "NONE":
             value = value / math.sqrt(max(features.shape[1], 1))
         return value
 
@@ -397,6 +413,10 @@ def _resolve_reference(dataset: SequenceDataset, refseq: object | None) -> tuple
         if refseq < 0 or refseq >= dataset.n_sequences:
             raise IndexError("Reference sequence index out of bounds.")
         return "index", int(refseq)
+    if isinstance(refseq, str):
+        if normalize_method(refseq) == "MOST_FREQUENT":
+            return "index", dataset.most_frequent_index()
+        raise TypeError("Unsupported refseq string value.")
     raise TypeError("Unsupported refseq value.")
 
 
@@ -405,7 +425,7 @@ def _distance_matrix_impl(
     *,
     method: str,
     refseq: object | None = None,
-    norm: str = "none",
+    norm: str | bool = "none",
     indel: str | float | Sequence[float] = "auto",
     sm: CostMatrixResult | np.ndarray | str | None = None,
     with_missing: bool = False,
@@ -419,6 +439,7 @@ def _distance_matrix_impl(
     dataset = _ensure_dataset(seqdata)
     with_missing = _resolved_with_missing(dataset, with_missing)
     method_name = normalize_method(method)
+    resolved_norm = _validate_norm_argument(method_name, norm)
     supported = {"OM", "HAM", "DHD", "LCS", "LCP", "RLCP", "CHI2", "EUCLID"}
     if method_name not in supported:
         raise ValueError(f"Unsupported distance method {method!r}. Supported methods: {', '.join(sorted(supported))}.")
@@ -436,7 +457,7 @@ def _distance_matrix_impl(
             refseq=reference,
             with_missing=with_missing,
             weighted=weighted,
-            norm=norm,
+            norm=resolved_norm,
             breaks=breaks,
             step=step,
             overlap=overlap,
@@ -465,7 +486,7 @@ def _distance_matrix_impl(
         raw, max_distance = _sequence_distance(method_name, left, right, substitution_costs, resolved_indel)
         return _normalized_distance(
             raw,
-            norm=norm,
+            norm=resolved_norm,
             method_name=method_name,
             len1=len(left),
             len2=len(right),
@@ -501,7 +522,7 @@ def distance_matrix(
     *,
     method: str,
     refseq: object | None = None,
-    norm: str = "none",
+    norm: str | bool = "none",
     indel: str | float | Sequence[float] = "auto",
     sm: CostMatrixResult | np.ndarray | str | None = None,
     with_missing: bool = False,
@@ -533,4 +554,3 @@ def distance_matrix(
 
 def seqdist(seqdata: SequenceDataset | object, *args: object, **kwargs: object) -> np.ndarray:
     return distance_matrix(seqdata, *args, **kwargs)
-

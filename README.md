@@ -105,8 +105,27 @@ The repository contains three layers of validation:
 - benchmark scaffolding in `benchmarks/benchmark_distances.py`
 - TraMineR parity scaffolding driven by `scripts/export_traminer_goldens.R`
 
+The parity fixture currently covers:
+
+- `TRATE` substitution costs and indel costs
+- `OM`, `HAM`, and normalized `LCS` distances
+- state distributions, entropy, transition rates, and mean time in state
+- representative sequence indices and group assignments
+
 The parity test is designed to run in CI when `Rscript` and TraMineR are
-available.
+available. You can also generate and use the fixture locally:
+
+```bash
+Rscript scripts/export_traminer_goldens.R
+pytest tests/test_parity_scaffolding.py
+```
+
+To point the parity test at a fixture stored somewhere else, set
+`SEQCOURSE_TRAMINER_GOLDEN`:
+
+```bash
+SEQCOURSE_TRAMINER_GOLDEN=/tmp/traminer_reference.json pytest tests/test_parity_scaffolding.py
+```
 
 ## Status
 

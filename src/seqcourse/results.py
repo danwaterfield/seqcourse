@@ -17,6 +17,7 @@ class CostMatrixResult:
     states: tuple[str, ...]
     method: str
     time_varying: bool = False
+    miss_cost: float | None = None
 
     @property
     def sm(self) -> np.ndarray:
@@ -46,4 +47,3 @@ class RepresentativeSequencesResult:
     @property
     def representatives(self) -> SequenceDataset:
         return self.dataset.take(self.indices.tolist())
-

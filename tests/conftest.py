@@ -23,3 +23,21 @@ def toy_wide() -> pd.DataFrame:
 @pytest.fixture()
 def toy_sequences(toy_wide: pd.DataFrame) -> SequenceDataset:
     return SequenceDataset.from_wide(toy_wide, weights=[1.0, 1.5, 1.0, 2.0])
+
+
+@pytest.fixture()
+def missing_wide() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            ["A", pd.NA, "B"],
+            ["A", "B", "B"],
+            ["B", "B", pd.NA],
+        ],
+        index=["m1", "m2", "m3"],
+        columns=["t1", "t2", "t3"],
+    )
+
+
+@pytest.fixture()
+def missing_sequences(missing_wide: pd.DataFrame) -> SequenceDataset:
+    return SequenceDataset.from_wide(missing_wide, weights=[1.0, 2.0, 1.0])

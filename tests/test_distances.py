@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from seqcourse import cost_matrix, distance_matrix
 
@@ -58,3 +59,25 @@ def test_dhd_and_chi2_are_available(toy_sequences) -> None:
     assert dhd.shape == (4, 4)
     assert chi2.shape == (4, 4)
     assert euclid.shape == (4, 4)
+
+
+def test_distance_matrix_accepts_boolean_norm_and_most_frequent_reference(toy_sequences) -> None:
+    normalized = distance_matrix(toy_sequences, method="LCS", norm=True)
+    reference = distance_matrix(toy_sequences, method="LCS", refseq="most_frequent")
+    assert normalized.shape == (4, 4)
+    assert reference.shape == (4,)
+    assert reference[toy_sequences.most_frequent_index()] == 0.0
+
+
+def test_chi2_and_euclid_reject_incompatible_norms(toy_sequences) -> None:
+    with pytest.raises(ValueError):
+        distance_matrix(toy_sequences, method="CHI2", norm="maxlength")
+    with pytest.raises(ValueError):
+        distance_matrix(toy_sequences, method="EUCLID", norm="gmean")
+
+
+def test_missing_sequences_require_with_missing_for_distance(missing_sequences) -> None:
+    with pytest.raises(ValueError):
+        distance_matrix(missing_sequences, method="LCS")
+    result = distance_matrix(missing_sequences, method="LCS", with_missing=True)
+    assert result.shape == (3, 3)

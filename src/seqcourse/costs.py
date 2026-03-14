@@ -33,6 +33,7 @@ def _cost_matrix_impl(
     cval: float | None = None,
     with_missing: bool = False,
     miss_cost: float | None = None,
+    miss_cost_fixed: bool | None = None,
     time_varying: bool = False,
     weighted: bool = True,
     transition: str = "both",
@@ -54,6 +55,23 @@ def _cost_matrix_impl(
         cval = 4.0 if time_varying and method_name == "TRATE" and transition == "both" else 2.0
     if miss_cost is None:
         miss_cost = cval
+    if miss_cost_fixed is None:
+        miss_cost_fixed = method_name not in {"INDELS", "INDELSLOG"}
+
+    def apply_missing_costs(costs: np.ndarray) -> np.ndarray:
+        if not (with_missing and dataset.has_missing):
+            return costs
+        missing_index = n_states - 1
+        if costs.ndim == 2:
+            costs[missing_index, :] = float(miss_cost)
+            costs[:, missing_index] = float(miss_cost)
+            costs[missing_index, missing_index] = 0.0
+            return costs
+        costs[missing_index, :, :] = float(miss_cost)
+        costs[:, missing_index, :] = float(miss_cost)
+        for position in range(costs.shape[2]):
+            costs[missing_index, missing_index, position] = 0.0
+        return costs
 
     if method_name == "CONSTANT":
         if time_varying:
@@ -63,7 +81,8 @@ def _cost_matrix_impl(
         else:
             costs = np.full((n_states, n_states), float(cval), dtype=float)
             np.fill_diagonal(costs, 0.0)
-        return CostMatrixResult(costs, indel=1.0, states=states, method=method_name, time_varying=time_varying)
+        costs = apply_missing_costs(costs)
+        return CostMatrixResult(costs, indel=1.0, states=states, method=method_name, time_varying=time_varying, miss_cost=miss_cost)
 
     if method_name == "FUTURE":
         if time_varying:
@@ -79,7 +98,8 @@ def _cost_matrix_impl(
                 distance = np.sqrt(np.sum(inverse * (transitions[left] - transitions[right]) ** 2))
                 costs[left, right] = distance
                 costs[right, left] = distance
-        return CostMatrixResult(costs, indel=0.5 * float(costs.max(initial=0.0)), states=states, method=method_name)
+        costs = apply_missing_costs(costs)
+        return CostMatrixResult(costs, indel=0.5 * float(costs.max(initial=0.0)), states=states, method=method_name, miss_cost=miss_cost)
 
     if method_name in {"INDELS", "INDELSLOG"}:
         if time_varying:
@@ -98,7 +118,9 @@ def _cost_matrix_impl(
                         if left == right:
                             continue
                         costs[left, right, position] = transformed[left, position] + transformed[right, position]
-            return CostMatrixResult(costs, indel=transformed, states=states, method=method_name, time_varying=True)
+            if miss_cost_fixed:
+                costs = apply_missing_costs(costs)
+            return CostMatrixResult(costs, indel=transformed, states=states, method=method_name, time_varying=True, miss_cost=miss_cost)
 
         weights = dataset.weights if weighted else np.ones(dataset.n_sequences, dtype=float)
         counts = np.zeros(n_states, dtype=float)
@@ -116,7 +138,9 @@ def _cost_matrix_impl(
                 if left == right:
                     continue
                 costs[left, right] = indel[left] + indel[right]
-        return CostMatrixResult(costs, indel=indel, states=states, method=method_name)
+        if miss_cost_fixed:
+            costs = apply_missing_costs(costs)
+        return CostMatrixResult(costs, indel=indel, states=states, method=method_name, miss_cost=miss_cost)
 
     transitions = transition_rates(dataset, time_varying=time_varying, weighted=weighted, lag=lag, with_missing=with_missing)
     if time_varying:
@@ -151,7 +175,8 @@ def _cost_matrix_impl(
                     cost = max(0.0, float(cost))
                     costs[left, right, position] = cost
                     costs[right, left, position] = cost
-        return CostMatrixResult(costs, indel=0.5 * float(costs.max(initial=0.0)), states=states, method=method_name, time_varying=True)
+        costs = apply_missing_costs(costs)
+        return CostMatrixResult(costs, indel=0.5 * float(costs.max(initial=0.0)), states=states, method=method_name, time_varying=True, miss_cost=miss_cost)
 
     costs = np.zeros((n_states, n_states), dtype=float)
     for left in range(n_states):
@@ -159,7 +184,8 @@ def _cost_matrix_impl(
             cost = max(0.0, float(cval - transitions[left, right] - transitions[right, left]))
             costs[left, right] = cost
             costs[right, left] = cost
-    return CostMatrixResult(costs, indel=0.5 * float(costs.max(initial=0.0)), states=states, method=method_name)
+    costs = apply_missing_costs(costs)
+    return CostMatrixResult(costs, indel=0.5 * float(costs.max(initial=0.0)), states=states, method=method_name, miss_cost=miss_cost)
 
 
 def cost_matrix(
@@ -169,6 +195,7 @@ def cost_matrix(
     cval: float | None = None,
     with_missing: bool = False,
     miss_cost: float | None = None,
+    miss_cost_fixed: bool | None = None,
     time_varying: bool = False,
     weighted: bool = True,
     transition: str = "both",
@@ -182,6 +209,7 @@ def cost_matrix(
         cval=cval,
         with_missing=with_missing,
         miss_cost=miss_cost,
+        miss_cost_fixed=miss_cost_fixed,
         time_varying=time_varying,
         weighted=weighted,
         transition=transition,
@@ -195,4 +223,3 @@ def seqcost(seqdata: SequenceDataset | object, *args: object, **kwargs: object) 
 
 def seqsubm(seqdata: SequenceDataset | object, *args: object, **kwargs: object) -> np.ndarray:
     return cost_matrix(seqdata, *args, **kwargs).sm
-
