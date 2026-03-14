@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "seqcourse"
+version = "0.1.0"
+description = "A Python-first sequence analysis library inspired by TraMineR."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-2.0-or-later"
+authors = [
+  { name = "Dan Waterfield" },
+]
+keywords = ["sequence-analysis", "social-science", "traminer", "trajectories", "life-course"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+  "matplotlib>=3.9",
+  "numpy>=2.0",
+  "pandas>=2.2",
+  "scipy>=1.14",
+]
+
+[project.urls]
+Homepage = "https://github.com/danwaterfield/seqcourse"
+Repository = "https://github.com/danwaterfield/seqcourse"
+Issues = "https://github.com/danwaterfield/seqcourse/issues"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-cov>=5.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/seqcourse"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/README.md",
+  "/LICENSE",
+  "/src",
+  "/tests",
+  "/scripts",
+  "/benchmarks",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra"
+testpaths = ["tests"]

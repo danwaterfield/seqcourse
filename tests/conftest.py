@@ -1,0 +1,25 @@
+from __future__ import annotations
+
+import pandas as pd
+import pytest
+
+from seqcourse import SequenceDataset
+
+
+@pytest.fixture()
+def toy_wide() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            ["A", "A", "B", "B"],
+            ["A", "C", "C", "B"],
+            ["B", "B", "B", "B"],
+            ["A", "A", "B", "B"],
+        ],
+        index=["s1", "s2", "s3", "s4"],
+        columns=["t1", "t2", "t3", "t4"],
+    )
+
+
+@pytest.fixture()
+def toy_sequences(toy_wide: pd.DataFrame) -> SequenceDataset:
+    return SequenceDataset.from_wide(toy_wide, weights=[1.0, 1.5, 1.0, 2.0])
