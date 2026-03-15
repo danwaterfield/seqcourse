@@ -26,7 +26,10 @@ extract_fixture <- function(frame, cols, weights = NULL) {
   }
   trate <- seqcost(seqs, method = "TRATE", with.missing = use_missing)
   om <- seqdist(seqs, method = "OM", sm = trate$sm, indel = trate$indel, with.missing = use_missing)
-  ham <- seqdist(seqs, method = "HAM", with.missing = use_missing)
+  ham <- tryCatch(
+    seqdist(seqs, method = "HAM", with.missing = use_missing),
+    error = function(e) NULL
+  )
   lcs_auto <- seqdist(seqs, method = "LCS", norm = "auto", with.missing = use_missing)
   statd <- seqstatd(seqs, with.missing = use_missing)
   trate_rates <- seqtrate(seqs, with.missing = use_missing)
@@ -41,7 +44,7 @@ extract_fixture <- function(frame, cols, weights = NULL) {
     trate_costs = unname(trate$sm),
     trate_indel = unname(trate$indel),
     om_distances = unname(as.matrix(om)),
-    ham_distances = unname(as.matrix(ham)),
+    ham_distances = if (is.null(ham)) NULL else unname(as.matrix(ham)),
     lcs_auto = unname(as.matrix(lcs_auto)),
     transition_rates = unname(trate_rates),
     mean_time = unname(meant),
@@ -67,7 +70,7 @@ datasets <- list(
 dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
 write_json(
   list(
-    schema_version = 3,
+    schema_version = 4,
     upstream = list(
       package = "TraMineR",
       version = as.character(packageVersion("TraMineR"))
