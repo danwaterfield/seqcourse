@@ -8,6 +8,14 @@ suppressPackageStartupMessages({
   library(jsonlite)
 })
 
+load_traminer_dataset <- function(name) {
+  data(list = name, package = "TraMineR", envir = environment())
+  if (!exists(name, inherits = FALSE)) {
+    stop(sprintf("TraMineR dataset '%s' could not be loaded.", name))
+  }
+  get(name, inherits = FALSE)
+}
+
 extract_fixture <- function(frame, cols, weights = NULL) {
   wide <- frame[, cols]
   if (is.null(weights)) {
@@ -40,6 +48,11 @@ extract_fixture <- function(frame, cols, weights = NULL) {
     representative_groups = as.integer(attr(reps, "Rep.group")) - 1
   )
 }
+
+actcal <- load_traminer_dataset("actcal")
+biofam <- load_traminer_dataset("biofam")
+ex1 <- load_traminer_dataset("ex1")
+mvad <- load_traminer_dataset("mvad")
 
 datasets <- list(
   actcal = extract_fixture(actcal, 13:24),

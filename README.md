@@ -153,7 +153,7 @@ pytest
 Run the small benchmark harness:
 
 ```bash
-python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 6
+python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 6 --repeat 3
 ```
 
 ## License
