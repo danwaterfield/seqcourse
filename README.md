@@ -6,6 +6,10 @@ core state-sequence workflow of TraMineR with a Python-first API, careful test
 coverage, and a backend architecture that can grow into native acceleration
 later without changing the public interface.
 
+The project is still alpha. The core Python test matrix is in good shape, but
+the TraMineR parity pipeline is still being hardened before any release claims
+about one-to-one replacement should be taken literally.
+
 ## Why SeqCourse
 
 - Python-native sequence objects instead of an R compatibility shim
@@ -127,13 +131,32 @@ To point the parity test at a fixture stored somewhere else, set
 SEQCOURSE_TRAMINER_GOLDEN=/tmp/traminer_reference.json pytest tests/test_parity_scaffolding.py
 ```
 
+## Performance
+
+The current backend is a pure Python/NumPy reference implementation. In
+practice that means:
+
+- cost generation is cheap
+- `HAM` is acceptable for small-to-medium exploratory jobs
+- pairwise `LCS` and especially `OM` become slow quickly as `n` grows because
+  they still run Python-level dynamic-programming kernels
+
+Use the benchmark harness when checking changes:
+
+```bash
+python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 6 --methods HAM,LCS,OM --repeat 3 --warmup 1
+```
+
 ## Status
 
 This is an early `0.x` library. The current focus is:
 
-- tightening parity for the core TraMineR state-sequence workflow
+- fixing the remaining TraMineR parity gaps, especially around missing values
+  and weighted fixtures
 - improving documentation and examples
 - profiling hotspots before introducing a Rust backend
+
+The current roadmap lives in [ROADMAP.md](ROADMAP.md).
 
 Still intentionally deferred:
 
@@ -153,7 +176,7 @@ pytest
 Run the small benchmark harness:
 
 ```bash
-python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 6 --repeat 3
+python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 6 --methods HAM,LCS,OM --repeat 3 --warmup 1
 ```
 
 ## License
