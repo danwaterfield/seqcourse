@@ -27,3 +27,12 @@ def test_transition_rates_shape_for_static_and_time_varying(toy_sequences) -> No
 def test_mean_time_in_state_can_return_proportions(toy_sequences) -> None:
     result = mean_time_in_state(toy_sequences, prop=True)
     assert np.isclose(result.sum(), 1.0)
+
+
+def test_missing_aware_summaries_include_missing_state(weighted_missing_sequences) -> None:
+    distribution = state_distribution(weighted_missing_sequences, with_missing=True)
+    mean_time = mean_time_in_state(weighted_missing_sequences, with_missing=True)
+    transitions = transition_rates(weighted_missing_sequences, with_missing=True)
+    assert weighted_missing_sequences.missing_state in distribution.frequencies.index
+    assert weighted_missing_sequences.missing_state in mean_time.index
+    assert transitions.shape == (3, 3)

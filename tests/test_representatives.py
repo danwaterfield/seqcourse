@@ -17,3 +17,10 @@ def test_density_based_representatives_assign_all_sequences(toy_sequences) -> No
     diss = distance_matrix(toy_sequences, method="LCS")
     result = representative_sequences(toy_sequences, criterion="density", diss=diss, coverage=0.5)
     assert np.array_equal(np.sort(result.groups.unique()), np.arange(result.indices.shape[0]))
+
+
+def test_representatives_support_missing_aware_distance_matrices(weighted_missing_sequences) -> None:
+    diss = distance_matrix(weighted_missing_sequences, method="LCS", with_missing=True)
+    result = representative_sequences(weighted_missing_sequences, criterion="freq", diss=diss, coverage=0.5)
+    assert result.distances.shape[0] == weighted_missing_sequences.n_sequences
+    assert result.indices.size >= 1

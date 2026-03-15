@@ -18,23 +18,26 @@ load_traminer_dataset <- function(name) {
 
 extract_fixture <- function(frame, cols, weights = NULL) {
   wide <- frame[, cols]
+  use_missing <- any(is.na(as.matrix(wide)))
   if (is.null(weights)) {
     seqs <- seqdef(wide)
   } else {
     seqs <- seqdef(wide, weights = weights)
   }
-  trate <- seqcost(seqs, method = "TRATE")
-  om <- seqdist(seqs, method = "OM", sm = trate$sm, indel = trate$indel)
-  ham <- seqdist(seqs, method = "HAM")
-  lcs_auto <- seqdist(seqs, method = "LCS", norm = "auto")
-  statd <- seqstatd(seqs)
-  trate_rates <- seqtrate(seqs)
-  meant <- seqmeant(seqs)
-  reps <- seqrep(seqs, criterion = "freq", diss = seqdist(seqs, method = "LCS"))
+  trate <- seqcost(seqs, method = "TRATE", with.missing = use_missing)
+  om <- seqdist(seqs, method = "OM", sm = trate$sm, indel = trate$indel, with.missing = use_missing)
+  ham <- seqdist(seqs, method = "HAM", with.missing = use_missing)
+  lcs_auto <- seqdist(seqs, method = "LCS", norm = "auto", with.missing = use_missing)
+  statd <- seqstatd(seqs, with.missing = use_missing)
+  trate_rates <- seqtrate(seqs, with.missing = use_missing)
+  meant <- seqmeant(seqs, with.missing = use_missing)
+  lcs <- seqdist(seqs, method = "LCS", with.missing = use_missing)
+  reps <- seqrep(seqs, criterion = "freq", diss = lcs)
   list(
     wide = unname(as.matrix(wide)),
     columns = colnames(wide),
     weights = if (is.null(weights)) NULL else unname(as.numeric(weights)),
+    with_missing = use_missing,
     trate_costs = unname(trate$sm),
     trate_indel = unname(trate$indel),
     om_distances = unname(as.matrix(om)),
@@ -64,7 +67,7 @@ datasets <- list(
 dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
 write_json(
   list(
-    schema_version = 2,
+    schema_version = 3,
     upstream = list(
       package = "TraMineR",
       version = as.character(packageVersion("TraMineR"))

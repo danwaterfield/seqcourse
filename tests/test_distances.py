@@ -81,3 +81,10 @@ def test_missing_sequences_require_with_missing_for_distance(missing_sequences) 
         distance_matrix(missing_sequences, method="LCS")
     result = distance_matrix(missing_sequences, method="LCS", with_missing=True)
     assert result.shape == (3, 3)
+
+
+def test_om_distance_handles_weighted_datasets_with_missing_values(weighted_missing_sequences) -> None:
+    costs = cost_matrix(weighted_missing_sequences, method="TRATE", with_missing=True)
+    result = distance_matrix(weighted_missing_sequences, method="OM", sm=costs, with_missing=True)
+    assert result.shape == (3, 3)
+    assert np.isfinite(result).all()

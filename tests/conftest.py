@@ -41,3 +41,21 @@ def missing_wide() -> pd.DataFrame:
 @pytest.fixture()
 def missing_sequences(missing_wide: pd.DataFrame) -> SequenceDataset:
     return SequenceDataset.from_wide(missing_wide, weights=[1.0, 2.0, 1.0])
+
+
+@pytest.fixture()
+def weighted_missing_wide() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            ["A", pd.NA, "B", "B"],
+            [pd.NA, pd.NA, pd.NA, pd.NA],
+            ["B", "B", pd.NA, "A"],
+        ],
+        index=["w1", "w2", "w3"],
+        columns=["t1", "t2", "t3", "t4"],
+    )
+
+
+@pytest.fixture()
+def weighted_missing_sequences(weighted_missing_wide: pd.DataFrame) -> SequenceDataset:
+    return SequenceDataset.from_wide(weighted_missing_wide, weights=[1.0, 0.0, 2.0])
