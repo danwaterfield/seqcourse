@@ -14,13 +14,15 @@ What it does not have yet is release-grade parity or release-grade speed.
 ## Immediate Priorities
 
 1. Finish parity hardening for the core TraMineR workflow.
-   Current blocker: the parity fixture export still fails on TraMineR's weighted
-   `ex1` example when missing values are present and `with.missing=TRUE` has not
-   been threaded through the R-side calls consistently.
+   Current blocker: the fixture export now succeeds, but the Python parity test
+   still needs to normalize optional fixture fields correctly, especially
+   absent weights on unweighted datasets.
 
 2. Make parity CI trustworthy.
    The goal is a green parity workflow that generates fixtures, uploads them as
    artifacts, and verifies core outputs against TraMineR without manual steps.
+   The fixture contract now includes dataset-level `with_missing` handling and
+   optional `HAM` outputs for datasets where TraMineR defines that distance.
 
 3. Keep benchmark reporting honest and repeatable.
    The benchmark harness now reports `min/mean/max` timings; the next step is to

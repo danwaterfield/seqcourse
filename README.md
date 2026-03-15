@@ -112,7 +112,7 @@ The repository contains three layers of validation:
 The parity fixture currently covers:
 
 - `TRATE` substitution costs and indel costs
-- `OM`, `HAM`, and normalized `LCS` distances
+- `OM`, normalized `LCS`, and `HAM` where TraMineR defines it for the fixture
 - state distributions, entropy, transition rates, and mean time in state
 - representative sequence indices and group assignments
 
@@ -130,6 +130,10 @@ To point the parity test at a fixture stored somewhere else, set
 ```bash
 SEQCOURSE_TRAMINER_GOLDEN=/tmp/traminer_reference.json pytest tests/test_parity_scaffolding.py
 ```
+
+The fixture schema also carries dataset-level `with_missing` metadata, and may
+omit `HAM` output for unequal-length datasets because upstream TraMineR does
+not define `HAM` there.
 
 ## Performance
 
@@ -151,8 +155,8 @@ python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 
 
 This is an early `0.x` library. The current focus is:
 
-- fixing the remaining TraMineR parity gaps, especially around missing values
-  and weighted fixtures
+- fixing the remaining TraMineR parity gaps, especially around fixture
+  reconstruction for weighted and missing-value datasets
 - improving documentation and examples
 - profiling hotspots before introducing a Rust backend
 
