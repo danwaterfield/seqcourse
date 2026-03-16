@@ -155,8 +155,9 @@ python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 
 
 This is an early `0.x` library. The current focus is:
 
-- fixing the remaining TraMineR parity gaps, especially around fixture
-  reconstruction for weighted and missing-value datasets
+- closing the remaining TraMineR parity gaps now that the fixture contract
+  includes missing-value handling, optional `HAM`, optional weights, and
+  explicit state ordering
 - improving documentation and examples
 - profiling hotspots before introducing a Rust backend
 
