@@ -227,8 +227,9 @@ def _sequence_distance(method_name: str, seq1: np.ndarray, seq2: np.ndarray, sm:
         common = _suffix_length(seq1, seq2)
     else:
         raise ValueError(f"Unsupported sequence distance method {method_name!r}.")
-    raw = float(len(seq1) + len(seq2) - 2 * common)
-    return raw, float(max(len(seq1) + len(seq2), 1))
+    longer = max(len(seq1), len(seq2))
+    raw = float(longer - common)
+    return raw, float(max(longer, 1))
 
 
 def _normalized_distance(

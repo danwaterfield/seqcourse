@@ -12,10 +12,10 @@ def test_lcs_distance_matrix_matches_expected_values(toy_sequences) -> None:
         result,
         np.array(
             [
-                [0.0, 4.0, 4.0, 0.0],
-                [4.0, 0.0, 6.0, 4.0],
-                [4.0, 6.0, 0.0, 4.0],
-                [0.0, 4.0, 4.0, 0.0],
+                [0.0, 2.0, 2.0, 0.0],
+                [2.0, 0.0, 3.0, 2.0],
+                [2.0, 3.0, 0.0, 2.0],
+                [0.0, 2.0, 2.0, 0.0],
             ]
         ),
     )
@@ -64,7 +64,17 @@ def test_dhd_and_chi2_are_available(toy_sequences) -> None:
 def test_distance_matrix_accepts_boolean_norm_and_most_frequent_reference(toy_sequences) -> None:
     normalized = distance_matrix(toy_sequences, method="LCS", norm=True)
     reference = distance_matrix(toy_sequences, method="LCS", refseq="most_frequent")
-    assert normalized.shape == (4, 4)
+    assert np.allclose(
+        normalized,
+        np.array(
+            [
+                [0.0, 0.5, 0.5, 0.0],
+                [0.5, 0.0, 0.75, 0.5],
+                [0.5, 0.75, 0.0, 0.5],
+                [0.0, 0.5, 0.5, 0.0],
+            ]
+        ),
+    )
     assert reference.shape == (4,)
     assert reference[toy_sequences.most_frequent_index()] == 0.0
 
