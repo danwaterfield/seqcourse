@@ -1,9 +1,9 @@
-.pytest_cache/
 .venv/
+.tmp/
+.pytest_cache/
 __pycache__/
-*.pyc
-dist/
+*.py[cod]
 build/
-.coverage
-htmlcov/
-
+dist/
+*.egg-info/
+tests/goldens/traminer_reference.json

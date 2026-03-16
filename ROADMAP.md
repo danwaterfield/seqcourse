@@ -8,22 +8,21 @@ SeqCourse has a usable alpha core:
 - core cost methods and distance methods for the main TraMineR-style workflow
 - summaries, representative sequences, plotting, and a `compat` namespace
 - Python test coverage across CPython 3.11, 3.12, and 3.13
+- a green TraMineR parity workflow in GitHub Actions
 
-What it does not have yet is release-grade parity or release-grade speed.
+What it does not have yet is release-grade speed or the broader TraMineR
+surface area beyond the current core workflow.
 
 ## Immediate Priorities
 
-1. Finish parity hardening for the core TraMineR workflow.
-   Latest parity fixes now cover missing-value fixtures, optional `HAM`,
-   optional weights, and explicit state ordering. The next checkpoint is a
-   fully green parity workflow in GitHub Actions.
+1. Keep parity green while tightening the compatibility surface.
+   The current parity contract now covers state ordering, optional `HAM`,
+   optional weights, representative fixtures, and TraMineR-like handling of
+   trailing missing values in compatibility mode.
 
-2. Make parity CI trustworthy.
-   The goal is a green parity workflow that generates fixtures, uploads them as
-   artifacts, and verifies core outputs against TraMineR without manual steps.
-   The fixture contract now includes dataset-level `with_missing` handling and
-   optional `HAM` outputs for datasets where TraMineR defines that distance,
-   plus explicit state ordering to keep fixture reconstruction stable.
+2. Improve release polish.
+   Packaging checks, release notes, examples, and a clearer public story around
+   scope and limits are the next non-performance priorities.
 
 3. Keep benchmark reporting honest and repeatable.
    The benchmark harness now reports `min/mean/max` timings; the next step is to
@@ -45,6 +44,7 @@ What it does not have yet is release-grade parity or release-grade speed.
 Before the first serious public release, SeqCourse should have:
 
 - a green Python test matrix and green parity workflow
+- packaging checks in CI and a documented release checklist
 - documented performance expectations for the pure Python backend
 - a clearer statement of what is and is not yet equivalent to TraMineR
 - at least one worked example beyond the README quick start

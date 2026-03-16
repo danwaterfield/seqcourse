@@ -6,9 +6,10 @@ core state-sequence workflow of TraMineR with a Python-first API, careful test
 coverage, and a backend architecture that can grow into native acceleration
 later without changing the public interface.
 
-The project is still alpha. The core Python test matrix is in good shape, but
-the TraMineR parity pipeline is still being hardened before any release claims
-about one-to-one replacement should be taken literally.
+The project is still alpha, but as of March 16, 2026 the core Python test
+matrix and TraMineR parity workflow are both green in GitHub Actions. That is
+a strong validation milestone, not a claim of complete feature parity or
+production-grade speed.
 
 ## Why SeqCourse
 
@@ -135,6 +136,10 @@ The fixture schema also carries dataset-level `with_missing` metadata, and may
 omit `HAM` output for unequal-length datasets because upstream TraMineR does
 not define `HAM` there.
 
+The parity harness also reconstructs TraMineR-style sequence definitions more
+carefully, including state ordering, optional fixture fields, and
+TraMineR-like handling of trailing missing values in compatibility mode.
+
 ## Performance
 
 The current backend is a pure Python/NumPy reference implementation. In
@@ -155,9 +160,8 @@ python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 
 
 This is an early `0.x` library. The current focus is:
 
-- closing the remaining TraMineR parity gaps now that the fixture contract
-  includes missing-value handling, optional `HAM`, optional weights, and
-  explicit state ordering
+- keeping the green TraMineR parity workflow stable while broadening examples
+  and release polish
 - improving documentation and examples
 - profiling hotspots before introducing a Rust backend
 
@@ -178,11 +182,20 @@ Run the tests:
 pytest
 ```
 
+Build and check a release artifact locally:
+
+```bash
+python -m build
+python -m twine check dist/*
+```
+
 Run the small benchmark harness:
 
 ```bash
 python benchmarks/benchmark_distances.py --n-sequences 200 --length 32 --states 6 --methods HAM,LCS,OM --repeat 3 --warmup 1
 ```
+
+The release checklist lives in [RELEASING.md](RELEASING.md).
 
 ## License
 
