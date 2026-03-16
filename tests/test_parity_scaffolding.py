@@ -31,6 +31,10 @@ def _optional_vector(value: object) -> object | None:
     return value
 
 
+def _flat_numeric_vector(value: object) -> np.ndarray:
+    return np.asarray(value, dtype=float).reshape(-1)
+
+
 def _alphabet_and_missing_state(item: dict[str, object]) -> tuple[list[str] | None, str]:
     raw_states = item.get("states")
     if raw_states is None:
@@ -89,7 +93,7 @@ def test_traminer_reference_fixture_matches_core_outputs() -> None:
         )
         assert np.allclose(
             mean_time_in_state(dataset, with_missing=with_missing).to_numpy(dtype=float),
-            np.asarray(item["mean_time"], dtype=float),
+            _flat_numeric_vector(item["mean_time"]),
             atol=1e-6,
         )
         assert reps.indices.tolist() == item["representatives"]
@@ -101,6 +105,10 @@ def test_optional_vector_normalizes_empty_json_objects() -> None:
     assert _optional_vector({}) is None
     assert _optional_vector([]) == []
     assert _optional_vector([1.0, 2.0]) == [1.0, 2.0]
+
+
+def test_flat_numeric_vector_flattens_column_vectors() -> None:
+    assert np.array_equal(_flat_numeric_vector([[1.0], [2.0], [3.0]]), np.array([1.0, 2.0, 3.0]))
 
 
 def test_alphabet_and_missing_state_preserve_fixture_order() -> None:
