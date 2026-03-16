@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import pytest
 
-from seqcourse import cost_matrix, distance_matrix
+from seqcourse import SequenceDataset, cost_matrix, distance_matrix
 
 
 def test_lcs_distance_matrix_matches_expected_values(toy_sequences) -> None:
@@ -91,6 +92,23 @@ def test_missing_sequences_require_with_missing_for_distance(missing_sequences) 
         distance_matrix(missing_sequences, method="LCS")
     result = distance_matrix(missing_sequences, method="LCS", with_missing=True)
     assert result.shape == (3, 3)
+
+
+def test_lcs_gmean_normalization_handles_unequal_lengths() -> None:
+    dataset = SequenceDataset.from_wide(
+        pd.DataFrame(
+            [
+                ["A", "A", "B", "B"],
+                ["A", "A", "B", ""],
+            ],
+            columns=["t1", "t2", "t3", "t4"],
+        ),
+        void_values={""},
+    )
+    normalized = distance_matrix(dataset, method="LCS", norm="gmean")
+    expected = 1.0 - (3.0 / np.sqrt(12.0))
+    assert np.allclose(normalized[0, 1], expected)
+    assert np.allclose(normalized[1, 0], expected)
 
 
 def test_om_distance_handles_weighted_datasets_with_missing_values(weighted_missing_sequences) -> None:

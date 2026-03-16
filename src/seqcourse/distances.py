@@ -257,11 +257,11 @@ def _normalized_distance(
         return raw / max(len1, len2, 1)
     if norm_name == "GMEAN":
         denominator = math.sqrt(max(len1, 1) * max(len2, 1))
-        return raw / denominator
+        return 1.0 - ((max_distance - raw) / denominator)
     if norm_name == "MAXDIST":
         return raw / max(max_distance, 1.0)
     if norm_name == "YUJIANBO":
-        return (2.0 * raw) / (len1 + len2 + raw)
+        return (2.0 * raw) / (max_distance + raw)
     raise ValueError(f"Unsupported normalization {norm!r}.")
 
 
