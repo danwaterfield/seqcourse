@@ -14,6 +14,37 @@ from .plotting import plot_distribution, plot_frequency, plot_index, plot_repres
 from .representatives import representative_sequences
 
 
+_TRAMINER_TRAILING_VOID = "__SEQCOURSE_TRAILING_VOID__"
+
+
+def _replace_trailing_missing_with_void(data: object) -> object:
+    if isinstance(data, pd.DataFrame):
+        transformed = data.copy().astype(object)
+        values = transformed.to_numpy(dtype=object, copy=True)
+    else:
+        values = np.asarray(data, dtype=object).copy()
+        transformed = values
+
+    for row_index in range(values.shape[0]):
+        row = values[row_index]
+        observed = [column_index for column_index, value in enumerate(row) if not pd.isna(value)]
+        if not observed:
+            for column_index in range(values.shape[1]):
+                if isinstance(transformed, pd.DataFrame):
+                    transformed.iat[row_index, column_index] = _TRAMINER_TRAILING_VOID
+                else:
+                    values[row_index, column_index] = _TRAMINER_TRAILING_VOID
+            continue
+        last_observed = observed[-1]
+        for column_index in range(last_observed + 1, values.shape[1]):
+            if pd.isna(values[row_index, column_index]):
+                if isinstance(transformed, pd.DataFrame):
+                    transformed.iat[row_index, column_index] = _TRAMINER_TRAILING_VOID
+                else:
+                    values[row_index, column_index] = _TRAMINER_TRAILING_VOID
+    return transformed
+
+
 def seqdef(
     data: object,
     cols: list[int] | list[str] | None = None,
@@ -24,6 +55,8 @@ def seqdef(
     weights: list[float] | tuple[float, ...] | np.ndarray | None = None,
     missing_values: set[object] | None = None,
     void_values: set[object] | None = None,
+    missing_state: str = "__MISSING__",
+    trailing_missing_as_void: bool = True,
 ) -> SequenceDataset:
     if isinstance(data, SequenceDataset):
         return data
@@ -32,6 +65,10 @@ def seqdef(
         selected = data.loc[:, cols]
     elif cols is not None:
         selected = np.asarray(data)[:, cols]
+    resolved_void_values = set() if void_values is None else set(void_values)
+    if trailing_missing_as_void:
+        selected = _replace_trailing_missing_with_void(selected)
+        resolved_void_values.add(_TRAMINER_TRAILING_VOID)
     return SequenceDataset.from_wide(
         selected,
         alphabet=alphabet,
@@ -39,7 +76,8 @@ def seqdef(
         colors=cpal,
         weights=weights,
         missing_values=missing_values,
-        void_values=void_values,
+        void_values=resolved_void_values,
+        missing_state=missing_state,
     )
 
 

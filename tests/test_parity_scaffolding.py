@@ -10,6 +10,7 @@ import pytest
 
 from seqcourse import (
     SequenceDataset,
+    compat,
     cost_matrix,
     distance_matrix,
     mean_time_in_state,
@@ -46,7 +47,7 @@ def _alphabet_and_missing_state(item: dict[str, object]) -> tuple[list[str] | No
     if raw_states is None:
         return None, "__MISSING__"
     states = [str(state) for state in raw_states]
-    missing_state_raw = item.get("missing_state")
+    missing_state_raw = _optional_vector(item.get("missing_state"))
     missing_state = str(missing_state_raw) if missing_state_raw is not None else None
     if missing_state is None and item.get("with_missing", False) and states:
         missing_state = states[-1]
@@ -68,7 +69,7 @@ def test_traminer_reference_fixture_matches_core_outputs() -> None:
         frame = pd.DataFrame(item["wide"], columns=item["columns"])
         with_missing = bool(item.get("with_missing", False))
         alphabet, missing_state = _alphabet_and_missing_state(item)
-        dataset = SequenceDataset.from_wide(
+        dataset = compat.seqdef(
             frame,
             alphabet=alphabet,
             weights=_optional_vector(item.get("weights")),
@@ -86,9 +87,10 @@ def test_traminer_reference_fixture_matches_core_outputs() -> None:
         assert np.allclose(costs.sm, np.asarray(item["trate_costs"], dtype=float), atol=1e-6)
         assert np.allclose(np.asarray(costs.indel, dtype=float), np.asarray(item["trate_indel"], dtype=float), atol=1e-6)
         assert np.allclose(distances, np.asarray(item["om_distances"], dtype=float), atol=1e-6)
-        if item["ham_distances"] is not None:
+        ham_distances = _optional_vector(item.get("ham_distances"))
+        if ham_distances is not None:
             ham = distance_matrix(dataset, method="HAM", with_missing=with_missing)
-            assert np.allclose(ham, np.asarray(item["ham_distances"], dtype=float), atol=1e-6)
+            assert np.allclose(ham, np.asarray(ham_distances, dtype=float), atol=1e-6)
         assert np.allclose(lcs_auto, np.asarray(item["lcs_auto"], dtype=float), atol=1e-6)
         assert np.allclose(stats.frequencies.to_numpy(dtype=float), np.asarray(item["state_distribution"], dtype=float), atol=1e-6)
         assert np.allclose(stats.entropy.to_numpy(dtype=float), np.asarray(item["entropy"], dtype=float), atol=1e-6)
