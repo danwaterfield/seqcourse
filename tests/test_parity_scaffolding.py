@@ -35,6 +35,12 @@ def _flat_numeric_vector(value: object) -> np.ndarray:
     return np.asarray(value, dtype=float).reshape(-1)
 
 
+def _int_list(value: object) -> list[int]:
+    if isinstance(value, list):
+        return [int(item) for item in value]
+    return [int(value)]
+
+
 def _alphabet_and_missing_state(item: dict[str, object]) -> tuple[list[str] | None, str]:
     raw_states = item.get("states")
     if raw_states is None:
@@ -96,8 +102,8 @@ def test_traminer_reference_fixture_matches_core_outputs() -> None:
             _flat_numeric_vector(item["mean_time"]),
             atol=1e-6,
         )
-        assert reps.indices.tolist() == item["representatives"]
-        assert reps.groups.tolist() == item["representative_groups"]
+        assert reps.indices.tolist() == _int_list(item["representatives"])
+        assert reps.groups.tolist() == _int_list(item["representative_groups"])
 
 
 def test_optional_vector_normalizes_empty_json_objects() -> None:
@@ -109,6 +115,11 @@ def test_optional_vector_normalizes_empty_json_objects() -> None:
 
 def test_flat_numeric_vector_flattens_column_vectors() -> None:
     assert np.array_equal(_flat_numeric_vector([[1.0], [2.0], [3.0]]), np.array([1.0, 2.0, 3.0]))
+
+
+def test_int_list_wraps_scalar_values() -> None:
+    assert _int_list(4) == [4]
+    assert _int_list([1, 2]) == [1, 2]
 
 
 def test_alphabet_and_missing_state_preserve_fixture_order() -> None:
