@@ -31,18 +31,39 @@ def _optional_vector(value: object) -> object | None:
     return value
 
 
+def _alphabet_and_missing_state(item: dict[str, object]) -> tuple[list[str] | None, str]:
+    raw_states = item.get("states")
+    if raw_states is None:
+        return None, "__MISSING__"
+    states = [str(state) for state in raw_states]
+    missing_state_raw = item.get("missing_state")
+    missing_state = str(missing_state_raw) if missing_state_raw is not None else None
+    if missing_state is None and item.get("with_missing", False) and states:
+        missing_state = states[-1]
+    if missing_state is None:
+        return states, "__MISSING__"
+    alphabet = [state for state in states if state != missing_state]
+    return alphabet, missing_state
+
+
 @pytest.mark.skipif(
     not _golden_path().exists(),
     reason="Golden parity fixture has not been generated yet.",
 )
 def test_traminer_reference_fixture_matches_core_outputs() -> None:
     payload = json.loads(_golden_path().read_text())
-    assert payload["schema_version"] >= 4
+    assert payload["schema_version"] >= 5
     assert payload["upstream"]["package"] == "TraMineR"
     for item in payload["datasets"].values():
         frame = pd.DataFrame(item["wide"], columns=item["columns"])
         with_missing = bool(item.get("with_missing", False))
-        dataset = SequenceDataset.from_wide(frame, weights=_optional_vector(item.get("weights")))
+        alphabet, missing_state = _alphabet_and_missing_state(item)
+        dataset = SequenceDataset.from_wide(
+            frame,
+            alphabet=alphabet,
+            weights=_optional_vector(item.get("weights")),
+            missing_state=missing_state,
+        )
         costs = cost_matrix(dataset, method="TRATE", with_missing=with_missing)
         distances = distance_matrix(dataset, method="OM", sm=costs, with_missing=with_missing)
         lcs_auto = distance_matrix(dataset, method="LCS", norm="auto", with_missing=with_missing)
@@ -80,3 +101,15 @@ def test_optional_vector_normalizes_empty_json_objects() -> None:
     assert _optional_vector({}) is None
     assert _optional_vector([]) == []
     assert _optional_vector([1.0, 2.0]) == [1.0, 2.0]
+
+
+def test_alphabet_and_missing_state_preserve_fixture_order() -> None:
+    alphabet, missing_state = _alphabet_and_missing_state(
+        {
+            "states": ["B", "D", "A", "C", "*"],
+            "with_missing": True,
+            "missing_state": "*",
+        }
+    )
+    assert alphabet == ["B", "D", "A", "C"]
+    assert missing_state == "*"

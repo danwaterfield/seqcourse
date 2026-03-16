@@ -36,11 +36,15 @@ extract_fixture <- function(frame, cols, weights = NULL) {
   meant <- seqmeant(seqs, with.missing = use_missing)
   lcs <- seqdist(seqs, method = "LCS", with.missing = use_missing)
   reps <- seqrep(seqs, criterion = "freq", diss = lcs)
+  state_order <- rownames(trate$sm)
+  missing_state <- if (use_missing && length(state_order) > 0) tail(state_order, 1) else NULL
   list(
     wide = unname(as.matrix(wide)),
     columns = colnames(wide),
     weights = if (is.null(weights)) NULL else unname(as.numeric(weights)),
     with_missing = use_missing,
+    states = unname(state_order),
+    missing_state = if (is.null(missing_state)) NULL else unname(missing_state),
     trate_costs = unname(trate$sm),
     trate_indel = unname(trate$indel),
     om_distances = unname(as.matrix(om)),
@@ -70,7 +74,7 @@ datasets <- list(
 dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
 write_json(
   list(
-    schema_version = 4,
+    schema_version = 5,
     upstream = list(
       package = "TraMineR",
       version = as.character(packageVersion("TraMineR"))
